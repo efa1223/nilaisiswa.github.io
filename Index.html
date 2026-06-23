@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuruKita - Aplikasi Pendidik Mandiri</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen selection:bg-emerald-500 selection:text-white" x-data="guruKitaApp()">
+  
+  <!-- Outer Wrapper: Emulating a beautifully responsive premium workspace layout -->
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+    
+    <!-- Top Floating Header and Indicators -->
+    <header class="bg-slate-800/80 backdrop-blur-md rounded-2xl p-5 border border-slate-700/60 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-900/30">
+          <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-mono tracking-wider uppercase px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">Standalone App</span>
+            <span class="text-[9px] bg-cyan-500/10 text-cyan-400 font-mono px-2 py-0.5 rounded-full border border-cyan-500/20 font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> Offline Mode
+            </span>
+          </div>
+          <h1 class="text-xl font-extrabold tracking-tight mt-1 text-white">GuruKita Mandiri <span class="text-slate-400 text-sm font-normal">v1.0</span></h1>
+          <p class="text-slate-400 text-xs">Aplikasi guru tanpa server, bertenaga penyimpanan lokal perangkat Anda.</p>
+        </div>
+      </div>
+      <div class="text-left md:text-right font-mono text-xs bg-slate-950/40 p-3 rounded-xl border border-slate-700/40 w-full md:w-auto">
+        <div class="text-slate-400">Terakhir diekspor:</div>
+        <div class="font-bold text-emerald-400 mt-0.5">23/6/2026, 23.53.35</div>
+      </div>
+    </header>
+
+    <!-- Bento Statistics Display Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700/60 shadow-sm relative overflow-hidden group">
+        <div class="absolute right-3 top-3 text-emerald-500/10 group-hover:text-emerald-500/20 transition-colors">
+          <i data-lucide="users" class="w-16 h-16"></i>
+        </div>
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Siswa</span>
+        <h3 class="text-3xl font-black text-white mt-1" x-text="students.length + ' Siswa'">0 Siswa</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Siswa aktif terdaftar</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700/60 shadow-sm relative overflow-hidden group">
+        <div class="absolute right-3 top-3 text-cyan-500/10 group-hover:text-cyan-500/20 transition-colors">
+          <i data-lucide="award" class="w-16 h-16"></i>
+        </div>
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pemasukan Nilai</span>
+        <h3 class="text-3xl font-black text-white mt-1" x-text="grades.length + ' Rekor'">0 Rekor</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Nilai terinput di semua mapel</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700/60 shadow-sm relative overflow-hidden group">
+        <div class="absolute right-3 top-3 text-amber-500/10 group-hover:text-amber-500/20 transition-colors">
+          <i data-lucide="trending-up" class="w-16 h-16"></i>
+        </div>
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Rata-rata Nilai</span>
+        <h3 class="text-3xl font-black text-white mt-1" x-text="getStats().avgGrade">0.0</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Akumulasi prestasi kelas</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-5 rounded-2xl border border-slate-700/60 shadow-sm relative overflow-hidden group">
+        <div class="absolute right-3 top-3 text-rose-500/10 group-hover:text-rose-500/20 transition-colors">
+          <i data-lucide="check-square" class="w-16 h-16"></i>
+        </div>
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Rasio Kehadiran</span>
+        <h3 class="text-3xl font-black text-white mt-1" x-text="getStats().attRate + '%'">100%</h3>
+        <p class="text-[10px] text-slate-500 mt-1">Kehadiran (Hadir / Total Sesi)</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tab Pill Bar -->
+    <nav class="flex flex-wrap gap-2 p-1.5 bg-slate-800 rounded-xl border border-slate-700/50">
+      <button 
+        @click="activeTab = 'dashboard'"
+        :class="activeTab === 'dashboard' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/50'"
+        class="flex-1 py-2.5 px-4 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+        Dashboard
+      </button>
+
+      <button 
+        @click="activeTab = 'siswa'"
+        :class="activeTab === 'siswa' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/50'"
+        class="flex-1 py-2.5 px-4 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <i data-lucide="users" class="w-4 h-4"></i>
+        Daftar Siswa
+      </button>
+
+      <button 
+        @click="activeTab = 'presensi'"
+        :class="activeTab === 'presensi' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/50'"
+        class="flex-1 py-2.5 px-4 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <i data-lucide="calendar-check" class="w-4 h-4"></i>
+        Presensi Siswa
+      </button>
+
+      <button 
+        @click="activeTab = 'nilai'"
+        :class="activeTab === 'nilai' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/50'"
+        class="flex-1 py-2.5 px-4 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <i data-lucide="award" class="w-4 h-4"></i>
+        Nilai & Prestasi
+      </button>
+
+      <button 
+        @click="activeTab = 'backup'"
+        :class="activeTab === 'backup' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-700/50'"
+        class="flex-1 py-2.5 px-4 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        Data Portabilitas
+      </button>
+    </nav>
+
+    <!-- MAIN INTERACTIVE SCREENS CONTAINER -->
+    <main class="bg-slate-800 rounded-2xl border border-slate-700/60 shadow-xl overflow-hidden p-5 md:p-6 min-h-[450px]">
+      
+      <!-- TAB 1: DASHBOARD VIEW -->
+      <div x-show="activeTab === 'dashboard'" class="space-y-6">
+        <div class="border-b border-slate-700 pb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="text-emerald-500"></i> Ringkasan Dashboard Guru
+          </h2>
+          <p class="text-slate-400 text-xs mt-1">Gambaran cepat prestasi dan kehadiran kelas Anda hari ini.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Box 1: Kehadiran Hari Ini -->
+          <div class="bg-slate-900/50 rounded-xl p-5 border border-slate-700/40 space-y-4">
+            <h3 class="text-sm font-bold text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i> Status Kehadiran Hari Ini
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-center">
+                <span class="text-xs text-slate-500 block font-semibold">HADIR</span>
+                <span class="text-xl font-bold text-emerald-400" x-text="getTodayAttendanceStats().present">0</span>
+              </div>
+              <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-center">
+                <span class="text-xs text-slate-500 block font-semibold">SAKIT / IZIN</span>
+                <span class="text-xl font-bold text-cyan-400" x-text="getTodayAttendanceStats().sick + getTodayAttendanceStats().permit">0</span>
+              </div>
+              <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-center">
+                <span class="text-xs text-slate-500 block font-semibold">ABSEN / ALPHA</span>
+                <span class="text-xl font-bold text-rose-400" x-text="getTodayAttendanceStats().alpha">0</span>
+              </div>
+              <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800 text-center">
+                <span class="text-xs text-slate-500 block font-semibold">BELUM ABSEN</span>
+                <span class="text-xl font-bold text-slate-400" x-text="getTodayAttendanceStats().unmarked">0</span>
+              </div>
+            </div>
+            <div class="pt-2">
+              <button @click="activeTab = 'presensi'" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 rounded-lg border border-slate-700 transition-colors">
+                Lakukan Presensi Kelas &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Box 2: 5 Siswa Berprestasi Tertinggi -->
+          <div class="bg-slate-900/50 rounded-xl p-5 border border-slate-700/40 space-y-4">
+            <h3 class="text-sm font-bold text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="award" class="w-4 h-4 text-amber-400 animate-bounce"></i> 5 Siswa Berprestasi Terbaik
+            </h3>
+            
+            <div class="space-y-2">
+              <template x-for="(item, idx) in getTopStudents()" :key="item.id">
+                <div class="flex items-center justify-between bg-slate-950/30 p-2.5 rounded-lg border border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-slate-500 font-mono" x-text="'#' + (idx + 1)">#1</span>
+                    <div class="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white uppercase" x-text="item.name[0]"></div>
+                    <span class="text-xs font-semibold text-slate-200" x-text="item.name">Nama Siswa</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[9px] text-slate-500 font-mono" x-text="'NIS ' + item.nis">NIS</span>
+                    <span class="text-xs font-mono font-bold text-emerald-400" x-text="item.avg > 0 ? item.avg.toFixed(1) : '-'">-</span>
+                  </div>
+                </div>
+              </template>
+              <template x-if="getTopStudents().length === 0">
+                <div class="text-center py-6 text-slate-500 text-xs">Belum ada nilai yang diinput.</div>
+              </template>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 2: DAFTAR SISWA VIEW -->
+      <div x-show="activeTab === 'siswa'" class="space-y-6">
+        <div class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="users" class="text-emerald-500"></i> Kelola Daftar Siswa Kelas
+            </h2>
+            <p class="text-slate-400 text-xs mt-1">Tambah, perbarui, atau hapus data anggota kelas.</p>
+          </div>
+          <button @click="showAddStudentModal = true" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center gap-1.5 shadow-md shadow-emerald-950/20">
+            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Siswa
+          </button>
+        </div>
+
+        <!-- Search Bar and Count -->
+        <div class="flex items-center gap-3 bg-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-700/50">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+          <input 
+            type="text" 
+            x-model="studentSearch" 
+            placeholder="Cari nama atau nomor induk siswa (NIS)..." 
+            class="bg-transparent border-none text-xs text-slate-200 focus:outline-none w-full placeholder:text-slate-500"
+          />
+        </div>
+
+        <!-- Students Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-700/60 bg-slate-900/20">
+          <table class="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr class="bg-slate-900/65 text-slate-400 font-bold border-b border-slate-700">
+                <th class="px-4 py-3 text-center w-12">No</th>
+                <th class="px-4 py-3">Nomor Induk (NIS)</th>
+                <th class="px-4 py-3">Nama Lengkap</th>
+                <th class="px-4 py-3 text-center">Gender</th>
+                <th class="px-4 py-3 text-center">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <template x-for="(student, index) in filteredStudents()" :key="student.id">
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-4 py-3 text-center font-mono text-slate-500" x-text="index + 1">1</td>
+                  <td class="px-4 py-3 font-semibold font-mono text-slate-300" x-text="student.nis">NIS</td>
+                  <td class="px-4 py-3 text-slate-200 font-medium">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center font-bold text-[10px] text-white uppercase" x-text="student.name[0]"></div>
+                      <span x-text="student.name">Nama</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span 
+                      class="px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      :class="student.gender === 'L' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'"
+                      x-text="student.gender === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'"
+                    >L</span>
+                  </td>
+                  <td class="px-4 py-3 text-center flex items-center justify-center gap-2">
+                    <button @click="openEditStudent(student)" class="text-[10px] font-bold text-cyan-400 hover:underline px-2 py-1 bg-cyan-500/5 hover:bg-cyan-500/10 rounded-md border border-cyan-500/15">
+                      Edit
+                    </button>
+                    <button @click="deleteStudent(student.id)" class="text-[10px] font-bold text-rose-400 hover:underline px-2 py-1 bg-rose-500/5 hover:bg-rose-500/10 rounded-md border border-rose-500/15">
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              </template>
+              <template x-if="filteredStudents().length === 0">
+                <tr>
+                  <td colspan="5" class="text-center py-8 text-slate-500">Tidak ada siswa yang cocok dengan pencarian Anda.</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: PRESENSI SISWA VIEW -->
+      <div x-show="activeTab === 'presensi'" class="space-y-6">
+        <div class="border-b border-slate-700 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="calendar-check" class="text-emerald-500"></i> Perekaman Presensi Harian Siswa
+            </h2>
+            <p class="text-slate-400 text-xs mt-1">Pilih tanggal dan kelola status absensi siswa kelas secara real-time.</p>
+          </div>
+          <!-- Date selector -->
+          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl">
+            <i data-lucide="calendar" class="w-4 h-4 text-emerald-500"></i>
+            <input 
+              type="date" 
+              x-model="selectedDate" 
+              class="bg-transparent border-none text-xs font-bold text-white outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Quick Summary attendance bar for the date -->
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 flex flex-wrap gap-4 items-center justify-between text-xs">
+          <div class="text-slate-300">
+            Daftar kehadiran untuk tanggal: <b class="text-emerald-400 font-mono" x-text="selectedDate">2026-06-23</b>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold" x-text="'Hadir: ' + getTodayAttendanceStats().present">Hadir: 0</span>
+            <span class="px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold" x-text="'Sakit: ' + getTodayAttendanceStats().sick">Sakit: 0</span>
+            <span class="px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold" x-text="'Izin: ' + getTodayAttendanceStats().permit">Izin: 0</span>
+            <span class="px-2 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold" x-text="'Alpha: ' + getTodayAttendanceStats().alpha">Alpha: 0</span>
+          </div>
+        </div>
+
+        <!-- Attendance roster table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-700/60 bg-slate-900/20">
+          <table class="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr class="bg-slate-900/65 text-slate-400 font-bold border-b border-slate-700">
+                <th class="px-4 py-3 text-center w-12">No</th>
+                <th class="px-4 py-3">NIS</th>
+                <th class="px-4 py-3">Nama Siswa</th>
+                <th class="px-4 py-3 text-center">Status Kehadiran (Klik untuk menandai)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <template x-for="(student, index) in students" :key="student.id">
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-4 py-3 text-center font-mono text-slate-500" x-text="index + 1">1</td>
+                  <td class="px-4 py-3 font-mono text-slate-300" x-text="student.nis">NIS</td>
+                  <td class="px-4 py-3 text-slate-200 font-semibold" x-text="student.name">Nama</td>
+                  <td class="px-4 py-2">
+                    <div class="flex items-center justify-center gap-1">
+                      <!-- Hadir Button -->
+                      <button 
+                        @click="setAttendanceStatus(student.id, 'H')"
+                        :class="getAttendanceStatus(student.id) === 'H' ? 'bg-emerald-600 text-white font-bold border-emerald-500 shadow-md shadow-emerald-950/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'"
+                        class="px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all"
+                      >
+                        H (Hadir)
+                      </button>
+                      
+                      <!-- Sakit Button -->
+                      <button 
+                        @click="setAttendanceStatus(student.id, 'S')"
+                        :class="getAttendanceStatus(student.id) === 'S' ? 'bg-blue-600 text-white font-bold border-blue-500 shadow-md shadow-blue-950/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'"
+                        class="px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all"
+                      >
+                        S (Sakit)
+                      </button>
+
+                      <!-- Izin Button -->
+                      <button 
+                        @click="setAttendanceStatus(student.id, 'I')"
+                        :class="getAttendanceStatus(student.id) === 'I' ? 'bg-amber-600 text-white font-bold border-amber-500 shadow-md shadow-amber-950/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'"
+                        class="px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all"
+                      >
+                        I (Izin)
+                      </button>
+
+                      <!-- Alpha Button -->
+                      <button 
+                        @click="setAttendanceStatus(student.id, 'A')"
+                        :class="getAttendanceStatus(student.id) === 'A' ? 'bg-rose-600 text-white font-bold border-rose-500 shadow-md shadow-rose-950/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'"
+                        class="px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all"
+                      >
+                        A (Alpha)
+                      </button>
+
+                      <!-- Clear Button -->
+                      <button 
+                        @click="setAttendanceStatus(student.id, null)"
+                        x-show="getAttendanceStatus(student.id) !== null"
+                        class="px-1.5 py-1 text-[9px] hover:text-slate-300 text-slate-500"
+                        title="Kosongkan status"
+                      >
+                        X
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <template x-if="students.length === 0">
+                <tr>
+                  <td colspan="4" class="text-center py-8 text-slate-500">Belum ada siswa terdaftar. Silakan tambahkan siswa di Tab "Daftar Siswa".</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 4: NILAI SISWA VIEW -->
+      <div x-show="activeTab === 'nilai'" class="space-y-6">
+        <div class="border-b border-slate-700 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="award" class="text-emerald-500"></i> Penilaian Hasil Pembelajaran Siswa
+            </h2>
+            <p class="text-slate-400 text-xs mt-1">Isi, perbarui, dan filter data rekapitulasi nilai per mata pelajaran & asesmen.</p>
+          </div>
+          
+          <div class="flex flex-wrap gap-2 w-full md:w-auto">
+            <!-- Subject dropdown -->
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs flex-1 sm:flex-initial">
+              <span class="text-slate-500 font-medium">Mapel:</span>
+              <select x-model="selectedSubject" class="bg-transparent text-white font-bold outline-none border-none cursor-pointer">
+                <option value="Matematika" class="bg-slate-800">📐 Matematika</option>
+                <option value="IPA (Sains)" class="bg-slate-800">🧬 IPA (Sains)</option>
+                <option value="Bahasa Indonesia" class="bg-slate-800">🇮🇩 Bahasa Indonesia</option>
+                <option value="Bahasa Inggris" class="bg-slate-800">🇬🇧 Bahasa Inggris</option>
+                <option value="IPS" class="bg-slate-800">🌍 IPS</option>
+                <option value="Informatika" class="bg-slate-800">💻 Informatika</option>
+                <option value="Bahasa Arab" class="bg-slate-800">🕌 Bahasa Arab</option>
+                <option value="Seni Budaya" class="bg-slate-800">🎨 Seni Budaya</option>
+                <option value="PJOK" class="bg-slate-800">⚽ PJOK</option>
+              </select>
+            </div>
+
+            <!-- Category dropdown -->
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-xl text-xs flex-1 sm:flex-initial">
+              <span class="text-slate-500 font-medium">Kategori:</span>
+              <select x-model="selectedCategory" class="bg-transparent text-white font-bold outline-none border-none cursor-pointer">
+                <option value="Tugas" class="bg-slate-800">📝 Tugas</option>
+                <option value="UH" class="bg-slate-800">📝 Ulangan Harian</option>
+                <option value="UTS" class="bg-slate-800">🏫 UTS</option>
+                <option value="UAS" class="bg-slate-800">🎓 UAS</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade category metrics -->
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between text-xs">
+          <div class="text-slate-300">
+            Penilaian mata pelajaran: <b class="text-amber-400" x-text="selectedSubject">Matematika</b> &bull; Asesmen: <b class="text-emerald-400" x-text="selectedCategory">Tugas</b>
+          </div>
+          <div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20 font-bold">
+            Rata-rata Kelas: <span x-text="getSubjectAverage()" class="font-mono ml-1">0.0</span>
+          </div>
+        </div>
+
+        <!-- Grade entry roster -->
+        <div class="overflow-x-auto rounded-xl border border-slate-700/60 bg-slate-900/20">
+          <table class="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr class="bg-slate-900/65 text-slate-400 font-bold border-b border-slate-700">
+                <th class="px-4 py-3 text-center w-12">No</th>
+                <th class="px-4 py-3">NIS</th>
+                <th class="px-4 py-3">Nama Siswa</th>
+                <th class="px-4 py-3 text-center w-40">Skor Nilai (0-100)</th>
+                <th class="px-4 py-3 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <template x-for="(student, index) in students" :key="student.id">
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-4 py-3 text-center font-mono text-slate-500" x-text="index + 1">1</td>
+                  <td class="px-4 py-3 font-mono text-slate-300" x-text="student.nis">NIS</td>
+                  <td class="px-4 py-3 text-slate-200 font-semibold" x-text="student.name">Nama</td>
+                  <td class="px-4 py-2 text-center">
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="100" 
+                      placeholder="Skor"
+                      :value="getGradeScore(student.id)"
+                      @input="setGradeScore(student.id, $event.target.value)"
+                      class="bg-slate-800 border border-slate-700 focus:border-emerald-500 rounded-lg py-1 px-3 w-28 text-center text-xs font-bold text-white outline-none transition-colors"
+                    />
+                  </td>
+                  <td class="px-4 py-3 text-center font-bold">
+                    <template x-if="getGradeScore(student.id) !== ''">
+                      <span 
+                        class="px-2 py-0.5 rounded text-[9px] uppercase"
+                        :class="getGradeScore(student.id) >= 85 ? 'bg-emerald-500/10 text-emerald-400' :
+                                getGradeScore(student.id) >= 75 ? 'bg-cyan-500/10 text-cyan-400' : 'bg-rose-500/10 text-rose-400'"
+                        x-text="getGradeScore(student.id) >= 85 ? 'Sangat Baik' :
+                               getGradeScore(student.id) >= 75 ? 'Cukup Baik' : 'Kurang'"
+                      ></span>
+                    </template>
+                    <template x-if="getGradeScore(student.id) === ''">
+                      <span class="text-slate-600 text-[10px]">- Belum Diisi -</span>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+              <template x-if="students.length === 0">
+                <tr>
+                  <td colspan="5" class="text-center py-8 text-slate-500">Belum ada siswa terdaftar. Silakan tambahkan siswa di Tab "Daftar Siswa".</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 5: BACKUP & PORTABILITY VIEW -->
+      <div x-show="activeTab === 'backup'" class="space-y-6">
+        <div class="border-b border-slate-700 pb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="text-emerald-500"></i> Portabilitas Data & Sinkronisasi Manual
+          </h2>
+          <p class="text-slate-400 text-xs mt-1">Pindahkan seluruh modifikasi data lokal Anda dari/ke database utama secara aman dan praktis.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Column 1: Export Card -->
+          <div class="bg-slate-900/50 rounded-xl p-5 border border-slate-700/40 space-y-4">
+            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="copy" class="w-4 h-4 text-emerald-400"></i> 1. Salin Cadangan Database (JSON)
+            </h3>
+            <p class="text-slate-400 text-[11px] leading-relaxed">
+              Tekan tombol di bawah untuk menyalin seluruh data Siswa, Nilai, dan Sesi Kehadiran yang baru saja Anda isi di file HTML ini sebagai kode JSON terstruktur. Anda bisa langsung menempelkannya ke kotak input sinkronisasi atau cadangan aplikasi pusat.
+            </p>
+            <button @click="exportData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer">
+              <i data-lucide="clipboard" class="w-4 h-4"></i> Salin Semua Data ke Clipboard
+            </button>
+          </div>
+
+          <!-- Column 2: Import / Reset Card -->
+          <div class="bg-slate-900/50 rounded-xl p-5 border border-slate-700/40 space-y-4">
+            <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+              <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i> 2. Setel Ulang Basis Data
+            </h3>
+            <p class="text-slate-400 text-[11px] leading-relaxed">
+              Menghapus seluruh perubahan lokal yang telah disimpan di browser Anda saat ini, lalu mengembalikan data ke posisi awal saat file standalone 'index.html' ini pertama kali diunduh.
+            </p>
+            <button @click="resetAllData()" class="w-full bg-slate-800 hover:bg-rose-950/20 hover:text-rose-400 text-slate-400 hover:border-rose-900 font-bold text-xs py-2.5 rounded-lg border border-slate-700 transition-all cursor-pointer">
+              Setel Ulang Data ke Awal Ekspor
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-slate-500 text-xs py-4 space-y-1">
+      <p>Aplikasi ini dihasilkan secara otomatis dari portal digital pendidik GuruKita.</p>
+      <p class="font-mono text-[10px]">© 2026 GuruKita. Diaktifkan 100% Offline Tanpa Token API & Cloud Server.</p>
+    </footer>
+
+    <!-- MODAL 1: TAMBAH SISWA MODAL -->
+    <div x-show="showAddStudentModal" class="fixed inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 z-50 transition-opacity" style="display: none;">
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 max-w-md w-full space-y-4 shadow-2xl animate-scale-up" @click.away="showAddStudentModal = false">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="user-plus" class="text-emerald-400"></i> Tambah Siswa Baru
+          </h3>
+          <button @click="showAddStudentModal = false" class="text-slate-400 hover:text-slate-200">&times;</button>
+        </div>
+
+        <div class="space-y-3.5 text-xs">
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Nomor Induk Siswa (NIS)</label>
+            <input type="text" x-model="newStudentNis" placeholder="Contoh: 10121" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white font-mono" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Nama Lengkap Siswa</label>
+            <input type="text" x-model="newStudentName" placeholder="Contoh: Ahmad Hidayat" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Jenis Kelamin</label>
+            <select x-model="newStudentGender" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white">
+              <option value="L">Laki-laki (L)</option>
+              <option value="P">Perempuan (P)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-2.5 pt-2">
+          <button @click="showAddStudentModal = false" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-xs transition-colors">Batal</button>
+          <button @click="addStudent()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs shadow-md shadow-emerald-950/20 transition-colors">Tambah Siswa</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: EDIT SISWA MODAL -->
+    <div x-show="showEditStudentModal" class="fixed inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 z-50 transition-opacity" style="display: none;">
+      <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 max-w-md w-full space-y-4 shadow-2xl" @click.away="showEditStudentModal = false">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="edit" class="text-cyan-400"></i> Edit Informasi Siswa
+          </h3>
+          <button @click="showEditStudentModal = false" class="text-slate-400 hover:text-slate-200">&times;</button>
+        </div>
+
+        <div class="space-y-3.5 text-xs">
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Nomor Induk Siswa (NIS)</label>
+            <input type="text" x-model="editingStudentNis" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white font-mono" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Nama Lengkap Siswa</label>
+            <input type="text" x-model="editingStudentName" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-slate-400 font-semibold">Jenis Kelamin</label>
+            <select x-model="editingStudentGender" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg p-2.5 outline-none text-white">
+              <option value="L">Laki-laki (L)</option>
+              <option value="P">Perempuan (P)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex gap-2.5 pt-2">
+          <button @click="showEditStudentModal = false" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-xs transition-colors">Batal</button>
+          <button @click="saveStudent()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 rounded-lg text-xs shadow-md transition-colors">Simpan Perubahan</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Embed the React-state initial values securely
+    window.GURUKITA_INITIAL_STUDENTS = [{"id":"1","name":"Ahmad Fauzi","nis":"10921","gender":"L","avatarGradient":"from-orange-400 to-amber-500"},{"id":"2","name":"Budi Santoso","nis":"10922","gender":"L","avatarGradient":"from-blue-400 to-indigo-500"},{"id":"3","name":"Citra Kirana","nis":"10923","gender":"P","avatarGradient":"from-pink-400 to-rose-500"},{"id":"4","name":"Dwi Haryanto","nis":"10924","gender":"L","avatarGradient":"from-emerald-400 to-teal-500"},{"id":"5","name":"Eka Lestari","nis":"10925","gender":"P","avatarGradient":"from-violet-400 to-purple-500"},{"id":"6","name":"Farhan Hakim","nis":"10926","gender":"L","avatarGradient":"from-cyan-400 to-blue-500"},{"id":"7","name":"Gita Permata","nis":"10927","gender":"P","avatarGradient":"from-fuchsia-400 to-pink-500"},{"id":"8","name":"Hendra Saputra","nis":"10928","gender":"L","avatarGradient":"from-yellow-400 to-amber-500"},{"id":"9","name":"Indah Kusuma","nis":"10929","gender":"P","avatarGradient":"from-purple-400 to-indigo-500"},{"id":"10","name":"Joko Widodo","nis":"10930","gender":"L","avatarGradient":"from-lime-400 to-emerald-500"},{"id":"s_1782229659743","name":"tes1","nis":"1099","gender":"L","avatarGradient":"from-fuchsia-400 to-pink-500"}];
+    window.GURUKITA_INITIAL_GRADES = [{"id":"g1","studentId":"1","subject":"Matematika","type":"Tugas","score":85,"date":"2026-06-15"},{"id":"g2","studentId":"1","subject":"Matematika","type":"UH","score":78,"date":"2026-06-18"},{"id":"g3","studentId":"2","subject":"Matematika","type":"Tugas","score":90,"date":"2026-06-15"},{"id":"g4","studentId":"2","subject":"Matematika","type":"UH","score":88,"date":"2026-06-18"},{"id":"g5","studentId":"3","subject":"Matematika","type":"Tugas","score":65,"date":"2026-06-15"},{"id":"g6","studentId":"3","subject":"Matematika","type":"UH","score":70,"date":"2026-06-18"},{"id":"g7","studentId":"4","subject":"Matematika","type":"Tugas","score":80,"date":"2026-06-15"},{"id":"g8","studentId":"4","subject":"Matematika","type":"UH","score":82,"date":"2026-06-18"},{"id":"g9","studentId":"5","subject":"Matematika","type":"Tugas","score":95,"date":"2026-06-15"},{"id":"g10","studentId":"5","subject":"Matematika","type":"UH","score":92,"date":"2026-06-18"},{"id":"g11","studentId":"6","subject":"Matematika","type":"Tugas","score":70,"date":"2026-06-15"},{"id":"g12","studentId":"6","subject":"Matematika","type":"UH","score":68,"date":"2026-06-18"},{"id":"g13","studentId":"7","subject":"Matematika","type":"Tugas","score":88,"date":"2026-06-15"},{"id":"g14","studentId":"7","subject":"Matematika","type":"UH","score":84,"date":"2026-06-18"},{"id":"g21","studentId":"1","subject":"IPA (Sains)","type":"Tugas","score":90,"date":"2026-06-16"},{"id":"g22","studentId":"1","subject":"IPA (Sains)","type":"UH","score":85,"date":"2026-06-20"},{"id":"g23","studentId":"2","subject":"IPA (Sains)","type":"Tugas","score":88,"date":"2026-06-16"},{"id":"g24","studentId":"2","subject":"IPA (Sains)","type":"UH","score":80,"date":"2026-06-20"},{"id":"g25","studentId":"3","subject":"IPA (Sains)","type":"Tugas","score":75,"date":"2026-06-16"},{"id":"g26","studentId":"3","subject":"IPA (Sains)","type":"UH","score":78,"date":"2026-06-20"},{"id":"g27","studentId":"4","subject":"IPA (Sains)","type":"Tugas","score":82,"date":"2026-06-16"},{"id":"g28","studentId":"4","subject":"IPA (Sains)","type":"UH","score":84,"date":"2026-06-20"},{"id":"g29","studentId":"5","subject":"IPA (Sains)","type":"Tugas","score":90,"date":"2026-06-16"},{"id":"g30","studentId":"5","subject":"IPA (Sains)","type":"UH","score":92,"date":"2026-06-20"}];
+    window.GURUKITA_INITIAL_ATTENDANCE = [{"id":"a1_1","date":"2026-06-22","studentId":"1","status":"H"},{"id":"a1_2","date":"2026-06-22","studentId":"2","status":"H"},{"id":"a1_3","date":"2026-06-22","studentId":"3","status":"I"},{"id":"a1_4","date":"2026-06-22","studentId":"4","status":"H"},{"id":"a1_5","date":"2026-06-22","studentId":"5","status":"H"},{"id":"a1_6","date":"2026-06-22","studentId":"6","status":"S"},{"id":"a1_7","date":"2026-06-22","studentId":"7","status":"H"},{"id":"a1_8","date":"2026-06-22","studentId":"8","status":"H"},{"id":"a1_9","date":"2026-06-22","studentId":"9","status":"H"},{"id":"a1_10","date":"2026-06-22","studentId":"10","status":"A"},{"id":"2026-06-23_1","date":"2026-06-23","studentId":"1","status":"I","notes":""},{"id":"2026-06-23_2","date":"2026-06-23","studentId":"2","status":"H","notes":""},{"id":"2026-06-23_3","date":"2026-06-23","studentId":"3","status":"H","notes":""},{"id":"2026-06-23_4","date":"2026-06-23","studentId":"4","status":"H","notes":""},{"id":"2026-06-23_5","date":"2026-06-23","studentId":"5","status":"H","notes":""},{"id":"2026-06-23_6","date":"2026-06-23","studentId":"6","status":"H","notes":""},{"id":"2026-06-23_7","date":"2026-06-23","studentId":"7","status":"H","notes":""},{"id":"2026-06-23_8","date":"2026-06-23","studentId":"8","status":"H","notes":""},{"id":"2026-06-23_9","date":"2026-06-23","studentId":"9","status":"H","notes":""},{"id":"2026-06-23_10","date":"2026-06-23","studentId":"10","status":"H","notes":""}];
+
+    // Initialize Lucide Icons initially
+    document.addEventListener("DOMContentLoaded", function() {
+      lucide.createIcons();
+    });
+
+    // Define the full Alpine Application
+    function guruKitaApp() {
+      const safeParse = (key, fallback) => {
+        try {
+          const val = localStorage.getItem(key);
+          if (!val || val === 'null' || val === 'undefined') return fallback;
+          const parsed = JSON.parse(val);
+          if (parsed === null || parsed === undefined) return fallback;
+          return parsed;
+        } catch (e) {
+          return fallback;
+        }
+      };
+
+      return {
+        activeTab: 'dashboard',
+        students: safeParse('standalone_students', window.GURUKITA_INITIAL_STUDENTS || []),
+        grades: safeParse('standalone_grades', window.GURUKITA_INITIAL_GRADES || []),
+        attendance: safeParse('standalone_attendance', window.GURUKITA_INITIAL_ATTENDANCE || []),
+        
+        // Students management state
+        studentSearch: '',
+        showAddStudentModal: false,
+        newStudentNis: '',
+        newStudentName: '',
+        newStudentGender: 'L',
+        
+        // Edit student state
+        showEditStudentModal: false,
+        editingStudentId: null,
+        editingStudentNis: '',
+        editingStudentName: '',
+        editingStudentGender: 'L',
+
+        // Attendance active date
+        selectedDate: new Date().toISOString().split('T')[0],
+
+        // Grades active selections
+        selectedSubject: 'Matematika',
+        selectedCategory: 'Tugas',
+
+        init() {
+          // Listen to changes in tab to redraw Lucide Icons instantly
+          this.$watch('activeTab', () => {
+            this.$nextTick(() => {
+              lucide.createIcons();
+            });
+          });
+          
+          this.$watch('showAddStudentModal', () => {
+            this.$nextTick(() => { lucide.createIcons(); });
+          });
+
+          this.$watch('showEditStudentModal', () => {
+            this.$nextTick(() => { lucide.createIcons(); });
+          });
+
+          // Watch states to sync with Local Storage permanently
+          this.$watch('students', val => {
+            localStorage.setItem('standalone_students', JSON.stringify(val));
+          });
+          this.$watch('grades', val => {
+            localStorage.setItem('standalone_grades', JSON.stringify(val));
+          });
+          this.$watch('attendance', val => {
+            localStorage.setItem('standalone_attendance', JSON.stringify(val));
+          });
+        },
+
+        getStats() {
+          const totalStudents = this.students.length;
+          const totalGrades = this.grades.length;
+          const totalAttendance = this.attendance.length;
+          
+          const avgGrade = totalGrades > 0
+            ? (this.grades.reduce((acc, curr) => acc + Number(curr.score), 0) / totalGrades).toFixed(1)
+            : '0.0';
+
+          const presentCount = this.attendance.filter(a => a.status === 'H').length;
+          const attRate = totalAttendance > 0
+            ? ((presentCount / totalAttendance) * 100).toFixed(0)
+            : '100';
+
+          return { totalStudents, totalGrades, totalAttendance, avgGrade, attRate };
+        },
+
+        filteredStudents() {
+          if (!this.studentSearch) return this.students;
+          const q = this.studentSearch.toLowerCase();
+          return this.students.filter(s => 
+            s.name.toLowerCase().includes(q) || 
+            s.nis.toLowerCase().includes(q)
+          );
+        },
+
+        addStudent() {
+          if (!this.newStudentNis || !this.newStudentName) {
+            alert('NIS dan Nama Lengkap wajib diisi!');
+            return;
+          }
+          if (this.students.some(s => s.nis === this.newStudentNis)) {
+            alert('NIS ini sudah terdaftar!');
+            return;
+          }
+          const newSt = {
+            id: 'st_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            nis: this.newStudentNis,
+            name: this.newStudentName,
+            gender: this.newStudentGender,
+            avatarGradient: 'from-emerald-500 to-teal-500'
+          };
+          this.students.push(newSt);
+          this.newStudentNis = '';
+          this.newStudentName = '';
+          this.newStudentGender = 'L';
+          this.showAddStudentModal = false;
+        },
+
+        openEditStudent(student) {
+          this.editingStudentId = student.id;
+          this.editingStudentNis = student.nis;
+          this.editingStudentName = student.name;
+          this.editingStudentGender = student.gender;
+          this.showEditStudentModal = true;
+        },
+
+        saveStudent() {
+          const idx = this.students.findIndex(s => s.id === this.editingStudentId);
+          if (idx !== -1) {
+            this.students[idx].nis = this.editingStudentNis;
+            this.students[idx].name = this.editingStudentName;
+            this.students[idx].gender = this.editingStudentGender;
+            // Force save to local storage
+            this.students = [...this.students];
+          }
+          this.showEditStudentModal = false;
+        },
+
+        deleteStudent(id) {
+          if (confirm('Apakah Anda yakin ingin menghapus siswa ini dan seluruh data nilai & presensinya?')) {
+            this.students = this.students.filter(s => s.id !== id);
+            this.grades = this.grades.filter(g => g.studentId !== id);
+            this.attendance = this.attendance.filter(a => a.studentId !== id);
+          }
+        },
+
+        getAttendanceStatus(studentId) {
+          const record = this.attendance.find(a => a.date === this.selectedDate && a.studentId === studentId);
+          return record ? record.status : null;
+        },
+
+        setAttendanceStatus(studentId, status) {
+          const existingIdx = this.attendance.findIndex(a => a.date === this.selectedDate && a.studentId === studentId);
+          if (existingIdx !== -1) {
+            if (status === null) {
+              this.attendance.splice(existingIdx, 1);
+            } else {
+              this.attendance[existingIdx].status = status;
+            }
+          } else if (status !== null) {
+            this.attendance.push({
+              id: 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+              date: this.selectedDate,
+              studentId: studentId,
+              status: status
+            });
+          }
+          this.attendance = [...this.attendance];
+        },
+
+        getGradeScore(studentId) {
+          const record = this.grades.find(g => 
+            g.studentId === studentId && 
+            g.subject === this.selectedSubject && 
+            g.type === this.selectedCategory
+          );
+          return record ? record.score : '';
+        },
+
+        setGradeScore(studentId, score) {
+          const existingIdx = this.grades.findIndex(g => 
+            g.studentId === studentId && 
+            g.subject === this.selectedSubject && 
+            g.type === this.selectedCategory
+          );
+          const numericScore = score === '' ? null : Number(score);
+          
+          if (existingIdx !== -1) {
+            if (numericScore === null) {
+              this.grades.splice(existingIdx, 1);
+            } else {
+              this.grades[existingIdx].score = numericScore;
+            }
+          } else if (numericScore !== null) {
+            this.grades.push({
+              id: 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+              studentId: studentId,
+              subject: this.selectedSubject,
+              type: this.selectedCategory,
+              score: numericScore,
+              date: new Date().toISOString().split('T')[0]
+            });
+          }
+          this.grades = [...this.grades];
+        },
+
+        getSubjectAverage() {
+          const currentGrades = this.grades.filter(g => g.subject === this.selectedSubject && g.type === this.selectedCategory);
+          if (currentGrades.length === 0) return '0.0';
+          const sum = currentGrades.reduce((acc, curr) => acc + Number(curr.score), 0);
+          return (sum / currentGrades.length).toFixed(1);
+        },
+
+        getTopStudents() {
+          const studentAverages = this.students.map(s => {
+            const studentGrades = this.grades.filter(g => g.studentId === s.id);
+            const avg = studentGrades.length > 0 
+              ? studentGrades.reduce((acc, curr) => acc + Number(curr.score), 0) / studentGrades.length
+              : 0;
+            return { ...s, avg };
+          });
+          return studentAverages.filter(item => item.avg > 0).sort((a, b) => b.avg - a.avg).slice(0, 5);
+        },
+
+        getTodayAttendanceStats() {
+          const records = this.attendance.filter(a => a.date === this.selectedDate);
+          const total = this.students.length;
+          if (total === 0) return { present: 0, sick: 0, permit: 0, alpha: 0, unmarked: 0, rate: 0 };
+          const present = records.filter(r => r.status === 'H').length;
+          const sick = records.filter(r => r.status === 'S').length;
+          const permit = records.filter(r => r.status === 'I').length;
+          const alpha = records.filter(r => r.status === 'A').length;
+          const unmarked = total - records.length;
+          const rate = ((present / total) * 100).toFixed(0);
+          return { present, sick, permit, alpha, unmarked, rate };
+        },
+
+        exportData() {
+          const dataStr = JSON.stringify({
+            students: this.students,
+            grades: this.grades,
+            attendance: this.attendance
+          }, null, 2);
+          
+          // Fallback simple prompt if clipboard fails
+          try {
+            navigator.clipboard.writeText(dataStr).then(() => {
+              alert('Basis Data Lengkap (Siswa, Nilai, Presensi) berhasil disalin ke Clipboard sebagai format JSON! Anda bisa langsung menempelkannya ke spreadsheet utama.');
+            }).catch(() => {
+              const popup = window.prompt("Gagal menyalin otomatis. Silakan salin teks di bawah secara manual:", dataStr);
+            });
+          } catch(e) {
+            window.prompt("Gagal menyalin otomatis. Silakan salin teks di bawah secara manual:", dataStr);
+          }
+        },
+
+        resetAllData() {
+          if (confirm('Apakah Anda yakin ingin menghapus seluruh data offline saat ini dan mengembalikannya ke versi ekspor pertama?')) {
+            localStorage.removeItem('standalone_students');
+            localStorage.removeItem('standalone_grades');
+            localStorage.removeItem('standalone_attendance');
+            this.students = [...window.GURUKITA_INITIAL_STUDENTS];
+            this.grades = [...window.GURUKITA_INITIAL_GRADES];
+            this.attendance = [...window.GURUKITA_INITIAL_ATTENDANCE];
+            alert('Data berhasil disetel ulang ke kondisi awal ekspor.');
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
